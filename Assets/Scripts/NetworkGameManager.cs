@@ -1,25 +1,19 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-// Photon 用の名前空間を参照する
+﻿// Photon 用の名前空間を参照する
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections.Generic;
+using UnityEngine;
 
-public class NetworkGameManager : MonoBehaviourPunCallbacks // Photon Realtime 用のクラスを継承する
+public class NetworkGameManager : MonoBehaviourPunCallbacks,IOnEventCallback // Photon Realtime 用のクラスを継承する
 {
     /// <summary>プレイヤーのプレハブ</summary>
     [SerializeField] string m_playerPrefabName = "Prefab";
-    /// <summary>ローカルプレイヤーだけ有効にすべきコンポーネントの名前</summary>
-    //[SerializeField] string m_inputHandlerName = "Name of component for input handler";
-    /// <summary>プレイヤーを出現させる場所</summary>
-    [SerializeField] Transform[] m_spawnPoints;
-    /// <summary>自分が出現した場所を記憶しておく変数</summary>
-    Transform m_mySpawnPoint;
-
+    [SerializeField] Transform[] m_spawnPositions;
+    
     private void Awake()
     {
-        // シーンの自動同期は無効にする
+        // シーンの自動同期は無効にする（シーン切り替えがない時は意味はない）
         PhotonNetwork.AutomaticallySyncScene = false;
     }
 
@@ -84,7 +78,13 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks // Photon Realtime �
         {
             RoomOptions roomOptions = new RoomOptions();
             roomOptions.IsVisible = true;   // 誰でも参加できるようにする
-            roomOptions.MaxPlayers = (byte)m_spawnPoints.Length;    // 最大参加人数は SpawnPoints の要素数とする
+            /* **************************************************
+             * spawPositions の配列長を最大プレイ人数とする。
+             * 無料版では最大20まで指定できる。
+             * MaxPlayers の型は byte なのでキャストしている。
+             * MaxPlayers の型が byte である理由はおそらく1ルームのプレイ人数を255人に制限したいためでしょう。
+             * **************************************************/
+            roomOptions.MaxPlayers = (byte) m_spawnPositions.Length;
             PhotonNetwork.CreateRoom(null, roomOptions); // ルーム名に null を指定するとランダムなルーム名を付ける
         }
     }
@@ -94,24 +94,47 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks // Photon Realtime �
     /// </summary>
     private void SpawnPlayer()
     {
-        // プレイヤーを spawn させる位置を決める
-        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;    // ActorNumber は 1 から順に振られる
-        Debug.Log("Spawn Player as ActorNumber: " + actorNumber);
+        // プレイヤーをどこに spawn させるか決める
+        int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;    // 自分の ActorNumber を取得する。なお ActorNumber は「1から」入室順に振られる。
+        Debug.Log("My ActorNumber: " + actorNumber);
+        Transform spawnPoint = m_spawnPositions[actorNumber % m_spawnPositions.Length];
 
-        // spawnPoints に順番に spawn させる
-        if (actorNumber < m_spawnPoints.Length + 1)
+        // プレイヤーを生成し、他のクライアントと同期する
+        GameObject player = PhotonNetwork.Instantiate(m_playerPrefabName, spawnPoint.position, Quaternion.identity);
+
+        /* **************************************************
+         * ルームに参加している人数が最大に達したら部屋を閉じる（参加を締め切る）
+         * 部屋を閉じないと、最大人数から減った時に次のユーザーが入ってきてしまう。
+         * 現状のコードではユーザーが最大人数から減った際の追加入室を考慮していないため、追加入室させたい場合は実装を変更する必要がある。
+         * **************************************************/
+        if (actorNumber > PhotonNetwork.CurrentRoom.MaxPlayers - 1)
         {
-            m_mySpawnPoint = m_spawnPoints[actorNumber - 1];
+            Debug.Log("Closing Room");
+            PhotonNetwork.CurrentRoom.IsOpen = false;
         }
-        GameObject player = PhotonNetwork.Instantiate(m_playerPrefabName, m_mySpawnPoint.position, m_mySpawnPoint.rotation);   // プレイヤーを生成し、他のクライアントと同期する
+    }
+    /// <summary>
+    /// イベントを起こす関数
+    /// </summary>
+    public void RaiseEvent()
+    {
+        RaiseEventOptions raiseEventOptions = new RaiseEventOptions
+        {
+            Receivers = ReceiverGroup.All,  // 全体に送る 他に MasterClient, Others が指定できる
+        };  // イベントの起こし方
+        SendOptions sendOptions = new SendOptions(); // オプションだが、特に何も指定しない
 
-        // 自分だけ入力を有効にする
-        //player.GetComponent<NetworkPlayerController>().Initialize();
+        // イベントを起こす
+        PhotonNetwork.RaiseEvent((byte)EventCode.start, "start", raiseEventOptions, sendOptions);
     }
 
-    #region MonoBehaviourPunCallbacks のコールバック関数
+    /* ***********************************************
+     * 
+     * これ以降は Photon の Callback メソッド
+     * 
+     * ***********************************************/
 
-    /// <summary>Photon に接続した時</summary>
+        /// <summary>Photon に接続した時</summary>
     public override void OnConnected()
     {
         Debug.Log("OnConnected");
@@ -160,7 +183,10 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks // Photon Realtime �
     public override void OnJoinedRoom()
     {
         Debug.Log("OnJoinedRoom");
-        SpawnPlayer();
+        if (PhotonNetwork.LocalPlayer.ActorNumber == PhotonNetwork.CurrentRoom.MaxPlayers)
+        {
+            RaiseEvent();
+        }
     }
 
     /// <summary>指定した部屋への入室に失敗した時</summary>
@@ -254,5 +280,30 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks // Photon Realtime �
         Debug.Log("OnCustomAuthenticationFailed");
     }
 
-    #endregion
+    /// <summary>
+    /// イベントを受け取る関数
+    /// イベントの内容はEventCodeによって変わる
+    /// </summary>
+    /// <param name="e"></param>
+    void IOnEventCallback.OnEvent(EventData e)
+    {
+        if ((int)e.Code < 200)  // 200 以上はシステムで使われているので処理しない
+        {
+            switch (e.Code)
+            {
+                case (byte)EventCode.start:
+                    SpawnPlayer();
+                break;
+            }
+        }
+    }
+}
+
+/// <summary>
+/// イベントの内容を表す
+/// </summary>
+enum EventCode
+{
+    /// <summary>ゲームを開始する/// </summary>
+    start
 }
