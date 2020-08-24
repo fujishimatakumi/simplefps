@@ -43,5 +43,10 @@ public class Damageable : MonoBehaviour
     {
         m_life = currentLife;
         Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
+        if (m_life <= 0)
+        {
+            NetworkGameManager.Destroy(gameObject);
+            Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
+        }
     }
 }
