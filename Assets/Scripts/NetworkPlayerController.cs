@@ -50,6 +50,10 @@ public class NetworkPlayerController : MonoBehaviour
         m_control = GetComponent<CharacterController>();
         m_photonView = GetComponent<PhotonView>();
 
+        //マウスカーソルを非表示にする
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         // 自分が生成したプレイヤーのカメラだけを有効にする
         if (m_photonView.IsMine)
         {
