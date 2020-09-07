@@ -11,6 +11,10 @@ public class NetworkPlayerController : MonoBehaviour
 {
     /// <summary>FPS のカメラ</summary>
     [SerializeField] Camera m_mainCamera;
+    [SerializeField] Camera m_SubCamera;
+    [SerializeField] GameObject m_Arch;
+    [SerializeField] Material m_myMaterial;
+    [SerializeField] Material m_otherMaterial;
     /// <summary>照準となる UI オブジェクト</summary>
     [SerializeField] Image m_crosshair;
     /// <summary>照準に敵を捕らえていない時の色</summary>    
@@ -54,15 +58,22 @@ public class NetworkPlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+        MeshRenderer r = m_Arch.GetComponent<MeshRenderer>();
+
         // 自分が生成したプレイヤーのカメラだけを有効にする
         if (m_photonView.IsMine)
         {
             m_mainCamera.gameObject.SetActive(true);
             m_cameraTransform = m_mainCamera.transform;
+            m_SubCamera.gameObject.SetActive(true);
+            m_Arch.gameObject.SetActive(true);
+            r.material = m_myMaterial;
         }
         else
         {
             m_mainCamera.gameObject.SetActive(false);
+            m_SubCamera.gameObject.SetActive(false);
+            r.material = m_otherMaterial;
         }
     }
 
