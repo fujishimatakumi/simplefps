@@ -36,6 +36,7 @@ public class NetworkPlayerController : MonoBehaviour
     private Vector3 m_camRotation;
 
     public float speed = 6;
+    [SerializeField] public float speedUp;
     public float jumpSpeed = 1.5f;
     public float gravity = 0.5f;
 
@@ -145,6 +146,12 @@ public class NetworkPlayerController : MonoBehaviour
             {
                 m_moveDirection.y = jumpSpeed;
             }
+        }
+
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            m_moveDirection.y -= gravity * Time.deltaTime;
+            m_control.Move(m_moveDirection *( speed * speedUp) * Time.deltaTime);
         }
 
         m_moveDirection.y -= gravity * Time.deltaTime;
