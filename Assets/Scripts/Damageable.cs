@@ -8,16 +8,14 @@ using Photon.Pun;
 /// </summary>
 public class Damageable : MonoBehaviour
 {
-    /// <summary>初期ライフ</summary>
-    [SerializeField, Range(1, 99999)] int m_initialLife = 5000;
-    /// <summary>現在のライフ</summary>
-    int m_life;
-    PhotonView m_photonView;
+    [SerializeField] HPManager m_manager;
+    //与えるダメージ
+    [SerializeField] int m_damage = 10;
+    [SerializeField] PhotonView m_photonView;
 
     private void Start()
     {
-        m_life = m_initialLife;
-        m_photonView = GetComponent<PhotonView>();
+        
     }
 
     /// <summary>
@@ -25,28 +23,14 @@ public class Damageable : MonoBehaviour
     /// </summary>
     /// <param name="playerId">ダメージを与えたプレイヤーのID</param>
     /// <param name="damage">ダメージ量</param>
-    public void Damage(int playerId, int damage)
+    public void Damage(int playerId)
     {
-        m_life -= damage;
-        Debug.LogFormat("Player {0} が Player {1} の {2} に {3} のダメージを与えた", playerId, m_photonView.Owner.ActorNumber, name, damage);
+        m_manager.m_life -= m_damage;
+        Debug.LogFormat("Player {0} が Player {1} の {2} に {3} のダメージを与えた", playerId, m_photonView.Owner.ActorNumber, name, m_damage);
 
-        object[] parameters = new object[] { m_life };
-        m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
+        object[] parameters = new object[] { m_manager.m_life };
+        m_manager.CallSyncLife(parameters);
     }
 
-    /// <summary>
-    /// ダメージを与えたことをクライアント間で同期する
-    /// </summary>
-    /// <param name="currentLife"></param>
-    [PunRPC]
-    void SyncLife(int currentLife)
-    {
-        m_life = currentLife;
-        Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
-        if (m_life <= 0)
-        {
-            NetworkGameManager.Destroy(gameObject);
-            Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
-        }
-    }
+    
 }

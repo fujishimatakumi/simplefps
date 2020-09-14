@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
+//using UnityEngine.UIElements;
 
 /// <summary>
 /// プレイヤーの基本操作を処理するコンポーネント
@@ -25,7 +26,8 @@ public class NetworkPlayerController : MonoBehaviour
     [SerializeField, Range(10, 200)] float m_shootRange = 100f;
     /// <summary>照準の Ray が当たる Layer</summary>
     [SerializeField] LayerMask m_shootingLayer;
-
+    /// <summary>ヘッドショット判定用フラグ/// </summary>
+    bool m_isHed;
     /// <summary>攻撃したらダメージを与えられる対象</summary>
     Damageable m_target;
     PhotonView m_photonView;
@@ -115,7 +117,14 @@ public class NetworkPlayerController : MonoBehaviour
         if (Physics.Raycast(ray, out hit, m_shootRange, m_shootingLayer))
         {
             m_target = hit.collider.GetComponent<Damageable>();
-
+            if (hit.collider.gameObject.tag == "Hed")
+            {
+                m_isHed = true;
+            }
+            else
+            {
+                m_isHed = false;
+            }
             if (m_target)
             {
                 m_crosshair.color = m_onTarget;
@@ -129,6 +138,7 @@ public class NetworkPlayerController : MonoBehaviour
         {
             m_target = null;
             m_crosshair.color = m_noTarget;
+            m_isHed = false;
         }
     }
 
@@ -167,7 +177,11 @@ public class NetworkPlayerController : MonoBehaviour
         {
             if (m_target)
             {
-                m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber, 10);
+                m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber);
+            }
+            else if (m_target && m_isHed)
+            {
+                m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber);
             }
         }
     }
