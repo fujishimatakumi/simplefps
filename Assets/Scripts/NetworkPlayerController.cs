@@ -52,10 +52,18 @@ public class NetworkPlayerController : MonoBehaviour
     [Range(50, 500)]
     public int sensitivity = 200;
 
+    /// <summary>足音/// </summary>
+    private new AudioSource audio;
+    [SerializeField] AudioClip footSound;
+
     private void Start()
     {
         m_control = GetComponent<CharacterController>();
         m_photonView = GetComponent<PhotonView>();
+
+        //足音を鳴らすための準備
+        audio = GetComponent<AudioSource>();
+        audio.clip = footSound;
 
         //マウスカーソルを非表示にする
         Cursor.lockState = CursorLockMode.Locked;
@@ -151,6 +159,11 @@ public class NetworkPlayerController : MonoBehaviour
         {
             m_moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
             m_moveDirection = transform.TransformDirection(m_moveDirection);
+            if (m_moveDirection.x != 0 || m_moveDirection.z != 0)
+            {
+                Debug.Log("音");
+                audio.Play();
+            }
 
             if (Input.GetButtonDown("Jump"))
             {
@@ -166,6 +179,7 @@ public class NetworkPlayerController : MonoBehaviour
 
         m_moveDirection.y -= gravity * Time.deltaTime;
         m_control.Move(m_moveDirection * speed * Time.deltaTime);
+
     }
 
     /// <summary>
