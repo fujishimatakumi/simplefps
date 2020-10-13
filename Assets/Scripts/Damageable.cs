@@ -28,7 +28,7 @@ public class Damageable : MonoBehaviour
         m_manager.m_life -= m_damage;
         Debug.LogFormat("Player {0} が Player {1} の {2} に {3} のダメージを与えた", playerId, m_photonView.Owner.ActorNumber, name, m_damage);
 
-        object[] parameters = new object[] { m_manager.m_life };
+        object[] parameters = new object[] { m_manager.m_life ,playerId};
         m_manager.CallSyncLife(parameters);
     }
 
