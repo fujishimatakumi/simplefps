@@ -2,15 +2,20 @@
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
-public class NetworkGameManager : MonoBehaviourPunCallbacks,IOnEventCallback // Photon Realtime 用のクラスを継承する
+public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback // Photon Realtime 用のクラスを継承する
 {
     /// <summary>プレイヤーのプレハブ</summary>
     [SerializeField] string m_playerPrefabName = "Prefab";
     [SerializeField] Transform[] m_spawnPositions;
-    
+    //非アクティブのテキストオブジェクトをアサインする
+    [SerializeField] GameObject m_resultTextObj;
+    [SerializeField] string m_startSceneName;
     private void Awake()
     {
         // シーンの自動同期は無効にする（シーン切り替えがない時は意味はない）
@@ -112,6 +117,21 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks,IOnEventCallback // 
             Debug.Log("Closing Room");
             PhotonNetwork.CurrentRoom.IsOpen = false;
         }
+    }
+
+    private void Result(string winerId)
+    {
+        Text resultText = m_resultTextObj.GetComponent<Text>();
+        resultText.text = "Player" + winerId + "Win";
+        m_resultTextObj.SetActive(true);
+        StartCoroutine(DelayLode(5));
+        
+    }
+    //シーン移行時のディレイ用コルーチン
+    private IEnumerator DelayLode(float waiteTime)
+    {
+        yield return new WaitForSeconds(waiteTime);
+        SceneManager.LoadScene(m_startSceneName);
     }
     /// <summary>
     /// イベントを起こす関数
@@ -294,6 +314,9 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks,IOnEventCallback // 
                 case (byte)EventCode.start:
                     SpawnPlayer();
                 break;
+                case (byte)EventCode.gameSet:
+                    Result(e.CustomData.ToString());
+                    break;
             }
         }
     }
@@ -302,8 +325,10 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks,IOnEventCallback // 
 /// <summary>
 /// イベントの内容を表す
 /// </summary>
-enum EventCode
+public enum EventCode
 {
-    /// <summary>ゲームを開始する/// </summary>
-    start
+    /// <summary>ゲームを開始する </summary>
+    start,
+    /// <summary>ゲーム終了用コード</summary>
+    gameSet
 }

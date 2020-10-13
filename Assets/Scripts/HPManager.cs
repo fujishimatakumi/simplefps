@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
+using ExitGames.Client.Photon;
 
 public class HPManager : MonoBehaviour
 {
@@ -28,7 +30,7 @@ public class HPManager : MonoBehaviour
     {
         m_life -= damage;
         Debug.LogFormat("Player {0} が Player {1} の {2} に {3} のダメージを与えた", playerId, m_photonView.Owner.ActorNumber, name, damage);
-
+        
         object[] parameters = new object[] { m_life };
         m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
     }
@@ -42,14 +44,35 @@ public class HPManager : MonoBehaviour
     /// </summary>
     /// <param name="currentLife"></param>
     [PunRPC]
-    void SyncLife(int currentLife)
+    void SyncLife(int currentLife,int playerId)
     {
         m_life = currentLife;
-        Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
+        
         if (m_life <= 0)
         {
-            NetworkGameManager.Destroy(gameObject);
-            Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
+            object[] paramater = new object[] { playerId };
+            m_photonView.RPC("Destroy", RpcTarget.All, paramater);
         }
+        Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
+    }
+
+    //オブジェクトの破棄処理ここでゲームセットのイベントを起こす
+    [PunRPC]
+    void Destroy(int playerId)
+    {
+        RaiseResultEvent(EventCode.gameSet, playerId);
+        NetworkGameManager.Destroy(gameObject);
+        Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
+    }
+
+    private void RaiseResultEvent(EventCode code,int winerId)
+    {
+        RaiseEventOptions option = new RaiseEventOptions
+        {
+            Receivers = ReceiverGroup.All
+        };
+        SendOptions sendsOption = new SendOptions();
+
+        PhotonNetwork.RaiseEvent((byte)code, winerId, option, sendsOption);
     }
 }
