@@ -61,7 +61,12 @@ public class HPManager : MonoBehaviour
     void Destroy(int playerId)
     {
         RaiseResultEvent(EventCode.gameSet, playerId);
-        NetworkGameManager.Destroy(gameObject);
+        GameObject[] gameObjects = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var item in gameObjects)
+        {
+            NetworkPlayerController controller = item.GetComponent<NetworkPlayerController>();
+            controller.enabled = false;
+        }
         Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
     }
 
