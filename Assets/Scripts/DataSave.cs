@@ -6,27 +6,34 @@ using System.IO;
 [System.Serializable]
 public class PlayerData
 {
-    public int m_winValue;
-    public int m_loseValue;
+    public int WinValue { get; set; }
+    public int LoseValue { get; set; }
 
     public PlayerData(){ }
     public PlayerData(int winValue,int loseValue)
     {
-        m_winValue = winValue;
-        m_loseValue = loseValue;
+        WinValue = winValue;
+        LoseValue = loseValue;
     }
     public static PlayerData operator +(PlayerData left, PlayerData right)
-        => new PlayerData(left.m_winValue + right.m_winValue, left.m_loseValue + right.m_loseValue); 
+        => new PlayerData(left.WinValue + right.WinValue, left.LoseValue + right.LoseValue); 
 }
 
 public class DataSave : MonoBehaviour
 {
 
     public static string filePath = Application.persistentDataPath + "/" + ".player.json";
-    public static void PlayerDataSave(PlayerData playerData)
+    public static void PlayerDataSave(GameSetStatus status)
     {
         PlayerData saveData = PlayerDataLode();
-        saveData = saveData + playerData;
+        if (status == GameSetStatus.Win)
+        {
+            saveData.WinValue += 1;
+        }
+        else
+        {
+            saveData.LoseValue += 1;
+        }
 
         string json = JsonUtility.ToJson(saveData);
 
@@ -48,4 +55,10 @@ public class DataSave : MonoBehaviour
         }
         return data;
     }
+}
+
+public enum GameSetStatus
+{ 
+    Win,
+    Lose
 }
