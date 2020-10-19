@@ -68,6 +68,15 @@ public class HPManager : MonoBehaviour
         {
             NetworkPlayerController controller = item.GetComponent<NetworkPlayerController>();
             controller.enabled = false;
+        }
+        Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
+    }
+
+    private void RaiseResultEvent(EventCode code,int winerId)
+    {
+        GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var item in objects)
+        {
             PhotonView view = item.GetComponent<PhotonView>();
             if (view.IsMine)
             {
@@ -75,11 +84,6 @@ public class HPManager : MonoBehaviour
                 DataSave.PlayerDataSave(manager.SetStatus);
             }
         }
-        Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
-    }
-
-    private void RaiseResultEvent(EventCode code,int winerId)
-    {
         RaiseEventOptions option = new RaiseEventOptions
         {
             Receivers = ReceiverGroup.All
