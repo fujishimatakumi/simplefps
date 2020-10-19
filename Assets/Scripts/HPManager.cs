@@ -12,6 +12,7 @@ public class HPManager : MonoBehaviour
     /// <summary>現在のライフ</summary>
     public int m_life { get; set;}
     PhotonView m_photonView;
+    public GameSetStatus SetStatus { get; set; } = GameSetStatus.Win;
 
     // Start is called before the first frame update
     void Start()
@@ -50,6 +51,7 @@ public class HPManager : MonoBehaviour
         
         if (m_life <= 0)
         {
+            SetStatus = GameSetStatus.Lose;
             object[] paramater = new object[] { playerId };
             m_photonView.RPC("Destroy", RpcTarget.All, paramater);
         }

@@ -4,6 +4,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -124,6 +125,8 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
         Text resultText = m_resultTextObj.GetComponent<Text>();
         resultText.text = "Player" + winerId + "Win";
         m_resultTextObj.SetActive(true);
+        HPManager hpManager = this.gameObject.GetComponent<HPManager>();
+        DataSave.PlayerDataSave(hpManager.SetStatus);
         StartCoroutine(DelayLode(5));
         
     }

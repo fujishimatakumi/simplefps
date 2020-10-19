@@ -6,17 +6,17 @@ using System.IO;
 [System.Serializable]
 public class PlayerData
 {
-    public int WinValue { get; set; }
-    public int LoseValue { get; set; }
+    public int m_winValue;
+    public int m_loseValue;
 
     public PlayerData(){ }
     public PlayerData(int winValue,int loseValue)
     {
-        WinValue = winValue;
-        LoseValue = loseValue;
+        m_winValue = winValue;
+        m_loseValue = loseValue;
     }
     public static PlayerData operator +(PlayerData left, PlayerData right)
-        => new PlayerData(left.WinValue + right.WinValue, left.LoseValue + right.LoseValue); 
+        => new PlayerData(left.m_winValue + right.m_winValue, left.m_loseValue + right.m_loseValue); 
 }
 
 public class DataSave : MonoBehaviour
@@ -28,11 +28,11 @@ public class DataSave : MonoBehaviour
         PlayerData saveData = PlayerDataLode();
         if (status == GameSetStatus.Win)
         {
-            saveData.WinValue += 1;
+            saveData.m_winValue += 1;
         }
         else
         {
-            saveData.LoseValue += 1;
+            saveData.m_loseValue += 1;
         }
 
         string json = JsonUtility.ToJson(saveData);
