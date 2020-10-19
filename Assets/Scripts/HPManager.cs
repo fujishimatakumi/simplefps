@@ -4,6 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
+using UnityEngine.EventSystems;
 
 public class HPManager : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class HPManager : MonoBehaviour
     {
         m_life = m_initialLife;
         m_photonView = GetComponent<PhotonView>();
+        StartCoroutine(CheckHP());
     }
 
     // Update is called once per frame
@@ -73,17 +75,7 @@ public class HPManager : MonoBehaviour
     }
 
     private void RaiseResultEvent(EventCode code,int winerId)
-    {
-        GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var item in objects)
-        {
-            PhotonView view = item.GetComponent<PhotonView>();
-            if (view.IsMine)
-            {
-                HPManager manager = item.GetComponent<HPManager>();
-                DataSave.PlayerDataSave(manager.SetStatus);
-            }
-        }
+    {   
         RaiseEventOptions option = new RaiseEventOptions
         {
             Receivers = ReceiverGroup.All
@@ -91,5 +83,29 @@ public class HPManager : MonoBehaviour
         SendOptions sendsOption = new SendOptions();
 
         PhotonNetwork.RaiseEvent((byte)code, winerId, option, sendsOption);
+    }
+
+    private IEnumerator CheckHP()
+    {
+        bool isCheck = false;
+        while (!isCheck)
+        {
+            if (m_life<=0)
+            {
+                GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
+                foreach (var item in objects)
+                {
+                    PhotonView view = item.GetComponent<PhotonView>();
+                    if (view.IsMine)
+                    {
+                        HPManager manager = item.GetComponent<HPManager>();
+                        DataSave.PlayerDataSave(manager.SetStatus);
+                    }
+                }
+                isCheck = true;
+            }
+            yield return null;
+        }
+        yield break;
     }
 }
