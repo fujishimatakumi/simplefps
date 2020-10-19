@@ -125,8 +125,16 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
         Text resultText = m_resultTextObj.GetComponent<Text>();
         resultText.text = "Player" + winerId + "Win";
         m_resultTextObj.SetActive(true);
-        HPManager hpManager = this.gameObject.GetComponent<HPManager>();
-        DataSave.PlayerDataSave(hpManager.SetStatus);
+        GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
+        foreach (var item in objects)
+        {
+            PhotonView view = item.GetComponent<PhotonView>();
+            if (view.IsMine)
+            {
+                HPManager hpManager = item.GetComponent<HPManager>();
+                DataSave.PlayerDataSave(hpManager.SetStatus);
+            }
+        }
         StartCoroutine(DelayLode(5));
         
     }
