@@ -23,10 +23,17 @@ public class DataSave : MonoBehaviour
 {
 
     public static string filePath = Application.persistentDataPath + "/" + ".player.json";
-    public static void PlayerDataSave(PlayerData playerData)
+    public static void PlayerDataSave(GameSetStatus status)
     {
         PlayerData saveData = PlayerDataLode();
-        saveData = saveData + playerData;
+        if (status == GameSetStatus.Win)
+        {
+            saveData.m_winValue += 1;
+        }
+        else
+        {
+            saveData.m_loseValue += 1;
+        }
 
         string json = JsonUtility.ToJson(saveData);
 
@@ -48,4 +55,10 @@ public class DataSave : MonoBehaviour
         }
         return data;
     }
+}
+
+public enum GameSetStatus
+{ 
+    Win,
+    Lose
 }

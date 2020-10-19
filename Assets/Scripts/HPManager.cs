@@ -4,6 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
+using UnityEngine.EventSystems;
 
 public class HPManager : MonoBehaviour
 {
@@ -12,12 +13,14 @@ public class HPManager : MonoBehaviour
     /// <summary>現在のライフ</summary>
     public int m_life { get; set;}
     PhotonView m_photonView;
+    public GameSetStatus SetStatus { get; set; } = GameSetStatus.Win;
 
     // Start is called before the first frame update
     void Start()
     {
         m_life = m_initialLife;
         m_photonView = GetComponent<PhotonView>();
+        StartCoroutine(CheckHP());
     }
 
     // Update is called once per frame
@@ -50,6 +53,7 @@ public class HPManager : MonoBehaviour
         
         if (m_life <= 0)
         {
+            SetStatus = GameSetStatus.Lose;
             object[] paramater = new object[] { playerId };
             m_photonView.RPC("Destroy", RpcTarget.All, paramater);
         }
@@ -71,7 +75,7 @@ public class HPManager : MonoBehaviour
     }
 
     private void RaiseResultEvent(EventCode code,int winerId)
-    {
+    {   
         RaiseEventOptions option = new RaiseEventOptions
         {
             Receivers = ReceiverGroup.All
@@ -79,5 +83,29 @@ public class HPManager : MonoBehaviour
         SendOptions sendsOption = new SendOptions();
 
         PhotonNetwork.RaiseEvent((byte)code, winerId, option, sendsOption);
+    }
+
+    private IEnumerator CheckHP()
+    {
+        bool isCheck = false;
+        while (!isCheck)
+        {
+            if (m_life<=0)
+            {
+                GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
+                foreach (var item in objects)
+                {
+                    PhotonView view = item.GetComponent<PhotonView>();
+                    if (view.IsMine)
+                    {
+                        HPManager manager = item.GetComponent<HPManager>();
+                        DataSave.PlayerDataSave(manager.SetStatus);
+                    }
+                }
+                isCheck = true;
+            }
+            yield return null;
+        }
+        yield break;
     }
 }
