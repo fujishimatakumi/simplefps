@@ -68,6 +68,12 @@ public class HPManager : MonoBehaviour
         {
             NetworkPlayerController controller = item.GetComponent<NetworkPlayerController>();
             controller.enabled = false;
+            PhotonView view = item.GetComponent<PhotonView>();
+            if (view.IsMine)
+            {
+                HPManager manager = item.GetComponent<HPManager>();
+                DataSave.PlayerDataSave(manager.SetStatus);
+            }
         }
         Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
     }
