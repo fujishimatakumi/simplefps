@@ -17,10 +17,13 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
     //非アクティブのテキストオブジェクトをアサインする
     [SerializeField] GameObject m_resultTextObj;
     [SerializeField] string m_startSceneName;
+    string m_timeManagerName = "TimeManager";
+    public static Text TimeText { get; private set; }
     private void Awake()
     {
         // シーンの自動同期は無効にする（シーン切り替えがない時は意味はない）
         PhotonNetwork.AutomaticallySyncScene = false;
+        TimeText = GameObject.FindGameObjectWithTag("TimeText").GetComponent<Text>();
     }
 
     private void Start()
@@ -107,7 +110,10 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
 
         // プレイヤーを生成し、他のクライアントと同期する
         GameObject player = PhotonNetwork.Instantiate(m_playerPrefabName, spawnPoint.position, Quaternion.identity);
-
+        if (actorNumber == 1)
+        {
+            GameObject timer = PhotonNetwork.Instantiate(m_timeManagerName, Vector3.zero, Quaternion.identity);
+        }
         /* **************************************************
          * ルームに参加している人数が最大に達したら部屋を閉じる（参加を締め切る）
          * 部屋を閉じないと、最大人数から減った時に次のユーザーが入ってきてしまう。
