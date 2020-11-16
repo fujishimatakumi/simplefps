@@ -16,6 +16,9 @@ public class NetworkPlayerController : MonoBehaviour
     [SerializeField] GameObject m_Arch;
     [SerializeField] Material m_myMaterial;
     [SerializeField] Material m_otherMaterial;
+    /// <summary>弾のライン</summary>
+    [SerializeField] LineRenderer m_line;
+    Vector3 hitPosition;
     /// <summary>照準となる UI オブジェクト</summary>
     [SerializeField] Image m_crosshair;
     /// <summary>照準に敵を捕らえていない時の色</summary>    
@@ -112,10 +115,12 @@ public class NetworkPlayerController : MonoBehaviour
     void Aim()
     {
         Ray ray = m_mainCamera.ScreenPointToRay(m_crosshair.rectTransform.position);
+        hitPosition = m_line.transform.position + m_line.transform.forward * m_shootRange;
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, m_shootRange, m_shootingLayer))
         {
+            hitPosition = hit.point;
             m_target = hit.collider.GetComponent<Damageable>();
             if (hit.collider.gameObject.tag == "Hed")
             {
@@ -132,6 +137,7 @@ public class NetworkPlayerController : MonoBehaviour
             else
             {
                 m_crosshair.color = m_noTarget;
+
             }
         }
         else
@@ -175,6 +181,7 @@ public class NetworkPlayerController : MonoBehaviour
     {
         if (Input.GetButtonDown("Fire1"))
         {
+            DrawLaser(hitPosition);
             if (m_target)
             {
                 m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber);
@@ -184,5 +191,15 @@ public class NetworkPlayerController : MonoBehaviour
                 m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber);
             }
         }
+        else
+        {
+            DrawLaser(m_line.transform.position);   // 撃っていない時は、Line の終点と始点を同じ位置にすることで Line を消す
+        }
+    }
+    void DrawLaser(Vector3 destination)
+    {
+        Vector3[] positions = { m_line.transform.position, destination };   // レーザーの始点は常に Muzzle にする
+        m_line.positionCount = positions.Length;   // Line を終点と始点のみに制限する
+        m_line.SetPositions(positions);
     }
 }
