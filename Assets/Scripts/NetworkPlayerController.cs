@@ -19,6 +19,7 @@ public class NetworkPlayerController : MonoBehaviour
     /// <summary>弾のライン</summary>
     [SerializeField] LineRenderer m_line;
     Vector3 hitPosition;
+    RectTransform m_crossRect;
     /// <summary>照準となる UI オブジェクト</summary>
     [SerializeField] Image m_crosshair;
     /// <summary>照準に敵を捕らえていない時の色</summary>    
@@ -115,7 +116,7 @@ public class NetworkPlayerController : MonoBehaviour
     void Aim()
     {
         Ray ray = m_mainCamera.ScreenPointToRay(m_crosshair.rectTransform.position);
-        hitPosition = m_line.transform.position + m_line.transform.forward * m_shootRange;
+        hitPosition = m_line.transform.position + Camera.main.transform.forward * m_shootRange;
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, m_shootRange, m_shootingLayer))
@@ -179,7 +180,7 @@ public class NetworkPlayerController : MonoBehaviour
     /// </summary>
     private void Shoot()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButton("Fire1"))
         {
             DrawLaser(hitPosition);
             if (m_target)
