@@ -126,6 +126,12 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
         }
     }
 
+    public Transform GetReSpawnPoint()
+    {
+        Transform point = m_spawnPositions[Random.Range(0, m_spawnPositions.Length)];
+        return point;
+    }
+
     /// <summary>
     /// プレイヤーをリスポーンさせる関数
     /// </summary>

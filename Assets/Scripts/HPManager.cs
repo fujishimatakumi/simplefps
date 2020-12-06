@@ -42,8 +42,16 @@ public class HPManager : MonoBehaviour
         int life = (int)parameters[0];
         if ( life<= 0)
         {
+            ResetStatus();
+            NetworkGameManager gm = GameObject.Find("GameManager").GetComponent<NetworkGameManager>();
+            Vector3 reSpawnPoint = gm.GetReSpawnPoint().position;
+            object[] param = new object[] { reSpawnPoint};
+            m_photonView.RPC("SyncPosition", RpcTarget.All, param);
+            /*
             object[] paramater = new object[] { this.gameObject };
             m_photonView.RPC("Destroy", RpcTarget.All, paramater);
+            */
+
         }
         m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
     }
@@ -60,6 +68,11 @@ public class HPManager : MonoBehaviour
         Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
     }
 
+    [PunRPC]
+    void SyncPosition(Vector3 position)
+    {
+        this.gameObject.transform.position = position; 
+    }
     //オブジェクトの停止処理ここでリスポーンのイベントを起こす
     [PunRPC]
     void Destroy(GameObject player)
@@ -88,6 +101,11 @@ public class HPManager : MonoBehaviour
         {
             if (m_life<=0)
             {
+                /*
+                NetworkGameManager gm = GameObject.Find("GameManager").GetComponent<NetworkGameManager>();
+                gm.ReSpawnPlayer();
+                */
+                /*
                 GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
                 foreach (var item in objects)
                 {
@@ -99,6 +117,7 @@ public class HPManager : MonoBehaviour
                     }
                 }
                 isCheck = true;
+                */
             }
             yield return null;
         }
