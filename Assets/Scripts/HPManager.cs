@@ -40,20 +40,25 @@ public class HPManager : MonoBehaviour
     public void CallSyncLife(object[] parameters)
     {
         int life = (int)parameters[0];
-        if ( life<= 0)
+        if (life <= 0)
         {
             ResetStatus();
             NetworkGameManager gm = GameObject.Find("GameManager").GetComponent<NetworkGameManager>();
             Vector3 reSpawnPoint = gm.GetReSpawnPoint().position;
-            object[] param = new object[] { reSpawnPoint};
+            object[] param = new object[] { reSpawnPoint };
             m_photonView.RPC("SyncPosition", RpcTarget.All, param);
+            object[] lifeParam = new object[] { m_life, PhotonNetwork.LocalPlayer.ActorNumber };
+            m_photonView.RPC("SyncLife", RpcTarget.All, lifeParam);
             /*
             object[] paramater = new object[] { this.gameObject };
             m_photonView.RPC("Destroy", RpcTarget.All, paramater);
             */
 
         }
-        m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
+        else
+        {
+            m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
+        }
     }
 
     /// <summary>
