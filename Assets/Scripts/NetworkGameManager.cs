@@ -126,6 +126,18 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
         }
     }
 
+    /// <summary>
+    /// プレイヤーをリスポーンさせる関数
+    /// </summary>
+    private void Respawn(GameObject player) 
+    {
+        Vector3 respawnPos = m_spawnPositions[Random.Range(0, m_spawnPositions.Length)].position;
+        player.transform.position = respawnPos;
+        HPManager hm = player.GetComponent<HPManager>();
+        hm.ResetStatus();
+        player.SetActive(true);
+    }
+
     private void Result(string winerId)
     {
         Text resultText = m_resultTextObj.GetComponent<Text>();
@@ -324,6 +336,9 @@ public class NetworkGameManager : MonoBehaviourPunCallbacks, IOnEventCallback //
                 case (byte)EventCode.gameSet:
                     Result(e.CustomData.ToString());
                     break;
+                case (byte)EventCode.respawn:
+                    Respawn((GameObject)e.CustomData);
+                    break;
             }
         }
     }
@@ -336,6 +351,8 @@ public enum EventCode
 {
     /// <summary>ゲームを開始する </summary>
     start,
+    /// <summary>プレイヤーをリスポーンさせる</summary>
+    respawn,
     /// <summary>ゲーム終了用コード</summary>
     gameSet
 }

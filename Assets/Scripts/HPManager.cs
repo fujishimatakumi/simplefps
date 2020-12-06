@@ -23,22 +23,28 @@ public class HPManager : MonoBehaviour
         StartCoroutine(CheckHP());
     }
 
-    // Update is called once per frame
-    void Update()
+    //リスポーンさせるときに呼ぶオブジェクトを初期化させる関数
+    public void ResetStatus()
     {
-        
+        m_life = m_initialLife;
     }
-
     public void Damage(int playerId, int damage)
     {
         m_life -= damage;
         Debug.LogFormat("Player {0} が Player {1} の {2} に {3} のダメージを与えた", playerId, m_photonView.Owner.ActorNumber, name, damage);
+
         
-        object[] parameters = new object[] { m_life };
+        object[] parameters = new object[] { m_life ,this.gameObject};
         m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
     }
     public void CallSyncLife(object[] parameters)
     {
+        int life = (int)parameters[0];
+        if ( life<= 0)
+        {
+            object[] paramater = new object[] { this.gameObject };
+            m_photonView.RPC("Destroy", RpcTarget.All, paramater);
+        }
         m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
     }
 
@@ -51,30 +57,20 @@ public class HPManager : MonoBehaviour
     {
         m_life = currentLife;
         
-        if (m_life <= 0)
-        {
-            SetStatus = GameSetStatus.Lose;
-            object[] paramater = new object[] { playerId };
-            m_photonView.RPC("Destroy", RpcTarget.All, paramater);
-        }
         Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
     }
 
-    //オブジェクトの破棄処理ここでゲームセットのイベントを起こす
+    //オブジェクトの停止処理ここでリスポーンのイベントを起こす
     [PunRPC]
-    void Destroy(int playerId)
+    void Destroy(GameObject player)
     {
-        RaiseResultEvent(EventCode.gameSet, playerId);
-        GameObject[] gameObjects = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var item in gameObjects)
-        {
-            NetworkPlayerController controller = item.GetComponent<NetworkPlayerController>();
-            controller.enabled = false;
-        }
+        this.gameObject.SetActive(false);
+        RaiseEvent(EventCode.respawn,player);
         Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
     }
 
-    private void RaiseResultEvent(EventCode code,int winerId)
+    //イベントコードに対応するイベントを行う
+    private void RaiseEvent(EventCode code,object sendObject)
     {   
         RaiseEventOptions option = new RaiseEventOptions
         {
@@ -82,7 +78,7 @@ public class HPManager : MonoBehaviour
         };
         SendOptions sendsOption = new SendOptions();
 
-        PhotonNetwork.RaiseEvent((byte)code, winerId, option, sendsOption);
+        PhotonNetwork.RaiseEvent((byte)code, sendObject, option, sendsOption);
     }
 
     private IEnumerator CheckHP()
