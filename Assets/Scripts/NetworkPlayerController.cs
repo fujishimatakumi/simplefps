@@ -57,8 +57,20 @@ public class NetworkPlayerController : MonoBehaviour
     public int sensitivity = 200;
 
     /// <summary>足音/// </summary>
-    private new AudioSource audio;
+    private AudioSource footAudio;
     [SerializeField] AudioClip footSound;
+
+    float runStepLengthen = 0.7f;
+    float stepInterval = 10f;
+    float stepCycle;
+    float nextStep;
+    bool isWalking;
+
+
+
+    /// <summary>銃声</summary>
+    private AudioSource BulletAudio;
+    [SerializeField] AudioClip BulletSound;
 
     private void Start()
     {
@@ -66,8 +78,8 @@ public class NetworkPlayerController : MonoBehaviour
         m_photonView = GetComponent<PhotonView>();
 
         //足音を鳴らすための準備
-        audio = GetComponent<AudioSource>();
-        audio.clip = footSound;
+        footAudio = GetComponent<AudioSource>();
+        footAudio.clip = footSound;
 
         //マウスカーソルを非表示にする
         Cursor.lockState = CursorLockMode.Locked;
@@ -101,6 +113,8 @@ public class NetworkPlayerController : MonoBehaviour
             Shoot();
             Rotate();
             Move();
+
+            ProgressStepCycle();
         }
     }
 
@@ -166,11 +180,7 @@ public class NetworkPlayerController : MonoBehaviour
         {
             m_moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
             m_moveDirection = transform.TransformDirection(m_moveDirection);
-            if (m_moveDirection.x != 0 || m_moveDirection.z != 0)
-            {
-                Debug.Log("音");
-                audio.Play();
-            }
+            isWalking = true;
 
             if (Input.GetButtonDown("Jump"))
             {
@@ -182,6 +192,8 @@ public class NetworkPlayerController : MonoBehaviour
         {
             m_moveDirection.y -= gravity * Time.deltaTime;
             m_control.Move(m_moveDirection *( speed * speedUp) * Time.deltaTime);
+            isWalking = false;
+
         }
 
         m_moveDirection.y -= gravity * Time.deltaTime;
@@ -194,7 +206,7 @@ public class NetworkPlayerController : MonoBehaviour
     /// </summary>
     private void Shoot()
     {
-        if (Input.GetButton("Fire1"))
+        if (Input.GetButtonDown("Fire1"))
         {
             DrawLaser(hitPosition);
             if (m_target)
@@ -216,5 +228,34 @@ public class NetworkPlayerController : MonoBehaviour
         Vector3[] positions = { m_line.transform.position, destination };   // レーザーの始点は常に Muzzle にする
         m_line.positionCount = positions.Length;   // Line を終点と始点のみに制限する
         m_line.SetPositions(positions);
+    }
+
+    void Sound()
+    {
+        if (!m_control.isGrounded)
+        {
+            return;
+        }
+        Debug.Log("音");
+        footAudio.PlayOneShot(footAudio.clip);
+    }
+
+    void ProgressStepCycle()
+    {
+
+        if (m_control.velocity.sqrMagnitude > 0 && (m_moveDirection.x != 0 || m_moveDirection.z != 0))
+        {
+            // 三項演算子（プログラミングテクニック）
+            stepCycle += (m_control.velocity.magnitude + (speed * (isWalking ? 1f : runStepLengthen))) * Time.deltaTime;
+        }
+
+        if (!(stepCycle > nextStep))
+        {
+            return;
+        }
+
+        // 足音の発生間隔・・・＞歩く時は間隔が長い。走る時は短い。
+        nextStep = stepCycle + stepInterval;
+        Sound();
     }
 }
