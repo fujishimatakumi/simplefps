@@ -69,8 +69,8 @@ public class NetworkPlayerController : MonoBehaviour
 
 
     /// <summary>銃声</summary>
-    private AudioSource BulletAudio;
-    [SerializeField] AudioClip BulletSound;
+    private AudioSource bulletAudio;
+    [SerializeField] AudioClip bulletSound;
 
     private void Start()
     {
@@ -80,6 +80,10 @@ public class NetworkPlayerController : MonoBehaviour
         //足音を鳴らすための準備
         footAudio = GetComponent<AudioSource>();
         footAudio.clip = footSound;
+
+        //銃声の準備
+        bulletAudio = GetComponent<AudioSource>();
+        bulletAudio.clip = bulletSound; 
 
         //マウスカーソルを非表示にする
         Cursor.lockState = CursorLockMode.Locked;
@@ -209,6 +213,7 @@ public class NetworkPlayerController : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             DrawLaser(hitPosition);
+            bulletAudio.PlayOneShot(bulletAudio.clip);
             if (m_target)
             {
                 m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber);
