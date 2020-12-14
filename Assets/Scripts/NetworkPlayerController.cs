@@ -8,7 +8,7 @@ using Photon.Pun;
 /// プレイヤーの基本操作を処理するコンポーネント
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(AudioSource))]
-public class NetworkPlayerController : MonoBehaviour
+public class NetworkPlayerController : MonoBehaviour 
 {
     /// <summary>FPS のカメラ</summary>
     [SerializeField] Camera m_mainCamera;
@@ -59,18 +59,14 @@ public class NetworkPlayerController : MonoBehaviour
     /// <summary>足音/// </summary>
     private AudioSource footAudio;
     [SerializeField] AudioClip footSound;
-
     float runStepLengthen = 0.7f;
     float stepInterval = 10f;
     float stepCycle;
     float nextStep;
     bool isWalking;
 
+    [SerializeField] ShootSound shootSound;
 
-
-    /// <summary>銃声</summary>
-    private AudioSource bulletAudio;
-    [SerializeField] AudioClip bulletSound;
 
     private void Start()
     {
@@ -80,10 +76,6 @@ public class NetworkPlayerController : MonoBehaviour
         //足音を鳴らすための準備
         footAudio = GetComponent<AudioSource>();
         footAudio.clip = footSound;
-
-        //銃声の準備
-        bulletAudio = GetComponent<AudioSource>();
-        bulletAudio.clip = bulletSound; 
 
         //マウスカーソルを非表示にする
         Cursor.lockState = CursorLockMode.Locked;
@@ -212,8 +204,8 @@ public class NetworkPlayerController : MonoBehaviour
     {
         if (Input.GetButtonDown("Fire1"))
         {
+            shootSound.Sound();
             DrawLaser(hitPosition);
-            bulletAudio.PlayOneShot(bulletAudio.clip);
             if (m_target)
             {
                 m_target.Damage(PhotonNetwork.LocalPlayer.ActorNumber);
@@ -235,7 +227,7 @@ public class NetworkPlayerController : MonoBehaviour
         m_line.SetPositions(positions);
     }
 
-    void Sound()
+    void FootSound()
     {
         if (!m_control.isGrounded)
         {
@@ -261,6 +253,6 @@ public class NetworkPlayerController : MonoBehaviour
 
         // 足音の発生間隔・・・＞歩く時は間隔が長い。走る時は短い。
         nextStep = stepCycle + stepInterval;
-        Sound();
+        FootSound();
     }
 }
