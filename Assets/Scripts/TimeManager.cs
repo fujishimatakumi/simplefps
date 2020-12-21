@@ -27,7 +27,7 @@ public class TimeManager : MonoBehaviour
         {
             m_timer -= Time.deltaTime;
             m_view.RPC("SyincTimeText", RpcTarget.All, null);
-            Debug.Log(m_timer);
+           // Debug.Log(m_timer);
             yield return null;
         }
     }
