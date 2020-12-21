@@ -2,13 +2,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
+using Photon.Realtime;
 //using UnityEngine.UIElements;
 
 /// <summary>
 /// プレイヤーの基本操作を処理するコンポーネント
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(AudioSource))]
-public class NetworkPlayerController : MonoBehaviour 
+public class NetworkPlayerController : MonoBehaviour
 {
     /// <summary>FPS のカメラ</summary>
     [SerializeField] Camera m_mainCamera;
@@ -237,6 +238,7 @@ public class NetworkPlayerController : MonoBehaviour
         footAudio.PlayOneShot(footAudio.clip);
     }
 
+    [PunRPC]
     void ProgressStepCycle()
     {
 
@@ -253,6 +255,6 @@ public class NetworkPlayerController : MonoBehaviour
 
         // 足音の発生間隔・・・＞歩く時は間隔が長い。走る時は短い。
         nextStep = stepCycle + stepInterval;
-        FootSound();
+        m_photonView.RPC("FootSound", RpcTarget.All);
     }
 }
