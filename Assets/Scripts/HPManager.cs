@@ -23,23 +23,42 @@ public class HPManager : MonoBehaviour
         StartCoroutine(CheckHP());
     }
 
-    // Update is called once per frame
-    void Update()
+    //リスポーンさせるときに呼ぶオブジェクトを初期化させる関数
+    public void ResetStatus()
     {
-        
+        m_life = m_initialLife;
     }
-
     public void Damage(int playerId, int damage)
     {
         m_life -= damage;
         Debug.LogFormat("Player {0} が Player {1} の {2} に {3} のダメージを与えた", playerId, m_photonView.Owner.ActorNumber, name, damage);
+
         
-        object[] parameters = new object[] { m_life };
+        object[] parameters = new object[] { m_life ,this.gameObject};
         m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
     }
     public void CallSyncLife(object[] parameters)
     {
-        m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
+        int life = (int)parameters[0];
+        if (life <= 0)
+        {
+            ResetStatus();
+            NetworkGameManager gm = GameObject.Find("GameManager").GetComponent<NetworkGameManager>();
+            Vector3 reSpawnPoint = gm.GetReSpawnPoint().position;
+            object[] param = new object[] { reSpawnPoint };
+            m_photonView.RPC("SyncPosition", RpcTarget.All, param);
+            object[] lifeParam = new object[] { m_life, PhotonNetwork.LocalPlayer.ActorNumber };
+            m_photonView.RPC("SyncLife", RpcTarget.All, lifeParam);
+            /*
+            object[] paramater = new object[] { this.gameObject };
+            m_photonView.RPC("Destroy", RpcTarget.All, paramater);
+            */
+
+        }
+        else
+        {
+            m_photonView.RPC("SyncLife", RpcTarget.All, parameters);
+        }
     }
 
     /// <summary>
@@ -51,30 +70,25 @@ public class HPManager : MonoBehaviour
     {
         m_life = currentLife;
         
-        if (m_life <= 0)
-        {
-            SetStatus = GameSetStatus.Lose;
-            object[] paramater = new object[] { playerId };
-            m_photonView.RPC("Destroy", RpcTarget.All, paramater);
-        }
         Debug.LogFormat("Player {0} の {1} の残りライフは {2}", m_photonView.Owner.ActorNumber, gameObject.name, m_life);
     }
 
-    //オブジェクトの破棄処理ここでゲームセットのイベントを起こす
     [PunRPC]
-    void Destroy(int playerId)
+    void SyncPosition(Vector3 position)
     {
-        RaiseResultEvent(EventCode.gameSet, playerId);
-        GameObject[] gameObjects = GameObject.FindGameObjectsWithTag("Player");
-        foreach (var item in gameObjects)
-        {
-            NetworkPlayerController controller = item.GetComponent<NetworkPlayerController>();
-            controller.enabled = false;
-        }
+        this.gameObject.transform.position = position; 
+    }
+    //オブジェクトの停止処理ここでリスポーンのイベントを起こす
+    [PunRPC]
+    void Destroy(GameObject player)
+    {
+        this.gameObject.SetActive(false);
+        RaiseEvent(EventCode.respawn,player);
         Debug.LogFormat("" + m_photonView.Owner.ActorNumber, gameObject.name);
     }
 
-    private void RaiseResultEvent(EventCode code,int winerId)
+    //イベントコードに対応するイベントを行う
+    private void RaiseEvent(EventCode code,object sendObject)
     {   
         RaiseEventOptions option = new RaiseEventOptions
         {
@@ -82,7 +96,7 @@ public class HPManager : MonoBehaviour
         };
         SendOptions sendsOption = new SendOptions();
 
-        PhotonNetwork.RaiseEvent((byte)code, winerId, option, sendsOption);
+        PhotonNetwork.RaiseEvent((byte)code, sendObject, option, sendsOption);
     }
 
     private IEnumerator CheckHP()
@@ -92,6 +106,11 @@ public class HPManager : MonoBehaviour
         {
             if (m_life<=0)
             {
+                /*
+                NetworkGameManager gm = GameObject.Find("GameManager").GetComponent<NetworkGameManager>();
+                gm.ReSpawnPlayer();
+                */
+                /*
                 GameObject[] objects = GameObject.FindGameObjectsWithTag("Player");
                 foreach (var item in objects)
                 {
@@ -103,6 +122,7 @@ public class HPManager : MonoBehaviour
                     }
                 }
                 isCheck = true;
+                */
             }
             yield return null;
         }
