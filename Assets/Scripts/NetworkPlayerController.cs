@@ -228,6 +228,7 @@ public class NetworkPlayerController : MonoBehaviour
         m_line.SetPositions(positions);
     }
 
+    [PunRPC]
     void FootSound()
     {
         if (!m_control.isGrounded)
@@ -238,7 +239,6 @@ public class NetworkPlayerController : MonoBehaviour
         footAudio.PlayOneShot(footAudio.clip);
     }
 
-    [PunRPC]
     void ProgressStepCycle()
     {
 
